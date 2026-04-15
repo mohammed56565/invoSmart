@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Branch Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h3>{{ branch.name }} — Dashboard</h3>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <h6 class="text-muted">Total Invoices</h6>
+            <h2>{{ total_invoices }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center p-3 border-success">
+            <h6 class="text-muted">Reviewed</h6>
+            <h2 class="text-success">{{ reviewed }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center p-3 border-warning">
+            <h6 class="text-muted">Pending</h6>
+            <h2 class="text-warning">{{ pending }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center p-3 border-danger">
+            <h6 class="text-muted">Errors</h6>
+            <h2 class="text-danger">{{ errors }}</h2>
+        </div>
+    </div>
+</div>
+
+{% if errors > 5 %}
+<div class="alert alert-danger">
+      High error rate detected! {{ errors }} invoices have errors.
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-md-4">
+        <a href="{% url 'branch_invoices' %}" class="btn btn-dark w-100 mb-2">View All Invoices</a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'branch_reports' %}" class="btn btn-dark w-100 mb-2">Reports</a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'branch_users' %}" class="btn btn-dark w-100 mb-2">Manage Users</a>
+    </div>
+</div>
+{% endblock %}

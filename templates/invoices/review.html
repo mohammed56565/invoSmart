@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}Review Invoice{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-5">
+        <h5>Invoice File</h5>
+
+
+        {% if invoice.file.name|slice:"-3:" == "pdf" %}
+    <!-- PDF Card -->
+          <div class="card text-center p-4" style="border: 2px dashed #ddd; border-radius: 10px; background-color: #f8f9fa;">
+            <h5 class="mb-3">📄 PDF Invoice</h5>
+            <p class="text-muted mb-4">{{ invoice.file.name }}</p>
+            <div class="d-grid gap-2">
+              <a href="{{ invoice.file.url }}" target="_blank" class="btn btn-primary btn-lg">
+                View PDF in New Tab
+              </a>
+              <a href="{{ invoice.file.url }}" download class="btn btn-outline-secondary">
+                Download PDF
+              </a>
+        </div>
+    </div>
+        {% else %}
+           <img src="{{ invoice.file.url }}" class="img-fluid" alt="Invoice" style="border: 1px solid #ddd; border-radius: 5px;">
+        {% endif %}
+
+
+
+
+    </div>
+    <div class="col-md-7">
+        <h5>Extracted Data</h5>
+        {% if not comparison.po_found %}
+        <div class="alert alert-warning">
+              No matching Purchase Order found.
+        </div>
+        {% endif %}
+        {% if confidence_data.overall %}
+        <div class="alert alert-info">
+            Overall Confidence: {{ confidence_data.overall }}%
+        </div>
+        {% endif %}
+        <form method="POST">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">
+                    Invoice Number
+                    <span class="badge bg-{% if confidence_data.invoice_number >= 80 %}success{% elif confidence_data.invoice_number >= 50 %}warning{% else %}danger{% endif %} ms-2">
+                        {{ confidence_data.invoice_number|default:0 }}%
+                    </span>
+                </label>
+                <input type="text" name="invoice_number" class="form-control"
+                       value="{{ invoice.invoice_number }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">
+                    Supplier Name
+                    <span class="badge bg-{% if confidence_data.supplier_name >= 80 %}success{% elif confidence_data.supplier_name >= 50 %}warning{% else %}danger{% endif %} ms-2">
+                        {{ confidence_data.supplier_name|default:0 }}%
+                    </span>
+                </label>
+                <input type="text" name="supplier_name"
+                       class="form-control {% if comparison.po_found and not comparison.supplier_match %}border-danger{% endif %}"
+                       value="{{ invoice.supplier_name }}">
+                {% if comparison.po_found and not comparison.supplier_match %}
+                <small class="text-danger">  Does not match Purchase Order supplier</small>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                <label class="form-label">
+                    Total Amount
+                    <span class="badge bg-{% if confidence_data.total_amount >= 80 %}success{% elif confidence_data.total_amount >= 50 %}warning{% else %}danger{% endif %} ms-2">
+                        {{ confidence_data.total_amount|default:0 }}%
+                    </span>
+                </label>
+                <input type="number" step="0.01" name="total_amount"
+                       class="form-control {% if comparison.po_found and not comparison.amount_match %}border-warning{% endif %}"
+                       value="{{ invoice.total_amount }}">
+                {% if comparison.po_found and not comparison.amount_match %}
+                <small class="text-warning">  Amount differs from Purchase Order</small>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                <label class="form-label">
+                    Date Issued
+                    <span class="badge bg-{% if confidence_data.date_issued >= 80 %}success{% elif confidence_data.date_issued >= 50 %}warning{% else %}danger{% endif %} ms-2">
+                        {{ confidence_data.date_issued|default:0 }}%
+                    </span>
+                </label>
+                <input type="date" name="date_issued" class="form-control"
+                        value="{{ invoice.date_issued|date:'Y-m-d' }}">
+            </div>
+            {% if invoice.purchase_order %}
+            <div class="alert alert-success">
+                  Matched PO: {{ invoice.purchase_order.po_number }}
+                — Remaining: {{ invoice.purchase_order.remaining_amount }}
+            </div>
+            {% endif %}
+            <button type="submit" class="btn btn-dark w-100">Submit Review</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

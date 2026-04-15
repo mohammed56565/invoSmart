@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Invoice{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-4">Upload Invoice</h4>
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Invoice File</label>
+                        <input type="file" name="file" class="form-control" 
+                               accept=".pdf,.jpg,.jpeg,.png" required>
+                        <small class="text-muted">Supported formats: PDF, JPG, PNG</small>
+                    </div>
+                    <button type="submit" class="btn btn-dark w-100">
+                        Upload & Process
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>System Admin Dashboard</h2>
+        <hr>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <h4>Users</h4>
+            <h2>{{ total_users }}</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <h4>Branches</h4>
+            <h2>{{ total_branches }}</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <h4>Invoices</h4>
+            <h2>{{ total_invoices }}</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <h4>Errors</h4>
+            <h2>{{ total_errors }}</h2>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <a href="/admin/" class="btn btn-dark">Manage Users & Settings</a>
+    </div>
+</div>
+{% endblock %}

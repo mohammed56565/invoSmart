@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Branch Invoices{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h3>{{ branch.name }} — Invoices</h3>
+    </div>
+    <div class="col text-end">
+        <a href="{% url 'branch_dashboard' %}" class="btn btn-outline-dark">Back</a>
+    </div>
+</div>
+
+<form method="GET" class="row mb-3">
+    <div class="col-md-4">
+        <input type="text" name="search" class="form-control"
+               placeholder="Search by supplier..." value="{{ search }}">
+    </div>
+    <div class="col-md-3">
+        <select name="status" class="form-select">
+            <option value="">All Status</option>
+            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+            <option value="reviewed" {% if status_filter == 'reviewed' %}selected{% endif %}>Reviewed</option>
+            <option value="error" {% if status_filter == 'error' %}selected{% endif %}>Error</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-dark">Search</button>
+    </div>
+</form>
+
+<table class="table table-bordered">
+    <thead class="table-dark">
+        <tr>
+            <th>Invoice #</th>
+            <th>Supplier</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Uploaded By</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for invoice in invoices %}
+        <tr>
+            <td>{{ invoice.invoice_number|default:"-" }}</td>
+            <td>{{ invoice.supplier_name|default:"-" }}</td>
+            <td>{{ invoice.total_amount|default:"-" }}</td>
+            <td>{{ invoice.date_issued|default:"-" }}</td>
+            <td>{{ invoice.uploaded_by.username }}</td>
+            <td>
+                {% if invoice.status == 'reviewed' %}
+                    <span class="badge bg-success">Reviewed</span>
+                {% elif invoice.status == 'error' %}
+                    <span class="badge bg-danger">Error</span>
+                {% elif invoice.status == 'processing' %}
+                    <span class="badge bg-warning">Processing</span>
+                {% else %}
+                    <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" class="text-center">No invoices found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
