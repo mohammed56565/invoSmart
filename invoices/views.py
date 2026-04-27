@@ -7,7 +7,7 @@ from .models import Invoice, PurchaseOrder
 from core.document_ai_extractor import process_invoice_with_documentai
 from users.decorators import role_required
 from datetime import datetime
-
+from decimal import Decimal
 
 @role_required('accounting_staff')
 def invoice_list(request):
@@ -107,6 +107,7 @@ def upload_invoice(request):
             messages.error(request, f'Error processing invoice: {str(e)}')
             return redirect('invoice_list')
 
+        check_error_threshold(request.user.branch)    
         messages.success(request, 'Invoice uploaded and processed successfully!')
         return redirect('review_invoice', invoice_id=invoice.id)
 
@@ -121,10 +122,17 @@ def review_invoice(request, invoice_id):
     comparison = {}
     if invoice.purchase_order:
         po = invoice.purchase_order
+        
+
+
+        invoice_amount = Decimal(str(invoice.total_amount or 0))
+        remaining_after = po.remaining_amount - invoice_amount 
         comparison = {
             'supplier_match': invoice.supplier_name.lower() == po.supplier_name.lower(),
             'amount_match': invoice.total_amount == po.total_amount,
             'po_found': True,
+            'po_number': po.po_number, 
+            'remaining_amount': remaining_after,
         }
     else:
         comparison = {'po_found': False}
@@ -163,12 +171,18 @@ def review_invoice(request, invoice_id):
 
     
         if invoice.purchase_order and invoice.total_amount:
-            po = invoice.purchase_order
-            po.amount_used += invoice.total_amount
-            po.remaining_amount = po.total_amount - po.amount_used
-            if po.remaining_amount <= 0:
-                po.status = 'closed'
-            po.save()
+          po = invoice.purchase_order
+    
+
+          invoice_amount = Decimal(str(invoice.total_amount))
+    
+          po.amount_used += invoice_amount  
+          po.remaining_amount = po.total_amount - po.amount_used
+    
+          if po.remaining_amount <= 0:
+            po.status = 'closed'
+    
+          po.save()
 
         invoice.status = 'reviewed'
         invoice.save()
@@ -181,7 +195,61 @@ def review_invoice(request, invoice_id):
         'comparison': comparison,
         'confidence_data': confidence_data,
     })
+def check_error_threshold(branch):
 
+    from datetime import datetime, timedelta
+    from notifications.models import Notification
+    from users.models import User
+    
+
+    yesterday = datetime.now() - timedelta(days=1)
+    
+    total_invoices = Invoice.objects.filter(
+        branch=branch,
+        uploaded_at__gte=yesterday
+    ).count()
+    
+
+    if total_invoices < 5:
+        return
+    
+    error_invoices = Invoice.objects.filter(
+        branch=branch,
+        uploaded_at__gte=yesterday,
+        status='error'
+    ).count()
+    
+
+    error_rate = (error_invoices / total_invoices) * 100
+    
+  
+    threshold = 20
+    
+    if error_rate > threshold:
+
+        try:
+            branch_manager = User.objects.get(
+                branch=branch,
+                role='branch_manager'
+            )
+            
+            one_hour_ago = datetime.now() - timedelta(hours=1)
+            existing_alert = Notification.objects.filter(
+                user=branch_manager,
+                notification_type='error_alert',
+                created_at__gte=one_hour_ago,
+                is_read=False
+            ).exists()
+            
+            if not existing_alert:
+                Notification.objects.create(
+                    user=branch_manager,
+                    message=f" High error rate detected: {error_invoices}/{total_invoices} invoices ({error_rate:.1f}%) failed in {branch.name} branch in the last 24 hours.",
+                    notification_type='error_alert'
+                )
+        
+        except User.DoesNotExist:
+            pass
 
 @role_required('accounting_staff')
 def delete_invoice(request, invoice_id):

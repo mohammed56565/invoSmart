@@ -12,20 +12,24 @@ from .models import Branch, Report
 
 @role_required('branch_manager')
 def branch_dashboard(request):
+    from notifications.models import Notification
+    
     branch = request.user.branch
-
-    total_invoices = Invoice.objects.filter(branch=branch).count()
-    reviewed = Invoice.objects.filter(branch=branch, status='reviewed').count()
-    pending = Invoice.objects.filter(branch=branch, status='pending').count()
-    errors = Invoice.objects.filter(branch=branch, status='error').count()
-
+    
+ 
+    unread_notifications = Notification.objects.filter(
+        user=request.user,
+        is_read=False
+    ).order_by('-created_at')[:5]
+    
     context = {
-        'total_invoices': total_invoices,
-        'reviewed': reviewed,
-        'pending': pending,
-        'errors': errors,
-        'branch': branch,
+        'total_invoices': Invoice.objects.filter(branch=branch).count(),
+        'pending': Invoice.objects.filter(branch=branch, status='pending').count(),
+        'reviewed': Invoice.objects.filter(branch=branch, status='reviewed').count(),
+        'errors': Invoice.objects.filter(branch=branch, status='error').count(),
+        'notifications': unread_notifications,
     }
+    
     return render(request, 'branches/dashboard.html', context)
 
 
