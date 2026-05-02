@@ -1,67 +1,72 @@
 {% extends 'base.html' %}
 
-{% block title %}Profile{% endblock %}
-
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h4>My Profile</h4>
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    
-                    <div class="mb-3">
-                        <label class="form-label">First Name</label>
-                        <input type="text" name="first_name" class="form-control" 
-                               value="{{ user.first_name }}" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Last Name</label>
-                        <input type="text" name="last_name" class="form-control" 
-                               value="{{ user.last_name }}" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="email" name="email" class="form-control" 
-                               value="{{ user.email }}" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Role</label>
-                        <input type="text" class="form-control" 
-                               value="{{ user.get_role_display }}" disabled>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Branch</label>
-                        <input type="text" class="form-control" 
-                               value="{{ user.branch }}" disabled>
-                    </div>
-                    
-                    <hr>
-                    
-                 
-                    <h5 class="mb-3">Change Password (Optional)</h5>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">New Password</label>
-                        <input type="password" name="new_password" class="form-control" 
-                               placeholder="Leave blank to keep current password">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Confirm New Password</label>
-                        <input type="password" name="confirm_password" class="form-control" 
-                               placeholder="Confirm new password">
-                    </div>
-                    
-                    <button type="submit" class="btn btn-dark btn-block w-100">Save Changes</button>
-                </form>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3>My Profile</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="first_name" 
+                                   name="first_name" value="{{ user.first_name }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" 
+                                   name="last_name" value="{{ user.last_name }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" 
+                                   name="email" value="{{ user.email }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Role</label>
+                            <input type="text" class="form-control" 
+                                   value="{{ user.get_role_display }}" disabled>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Branch</label>
+                            <input type="text" class="form-control" 
+                                   value="{{ user.branch.name }}" disabled>
+                        </div>
+                        
+                        <h4 class="mt-4">Change Password (Optional)</h4>
+                        
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="new_password" 
+                                   name="new_password" placeholder="Leave blank to keep current password">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirm_password" 
+                                   name="confirm_password">
+                        </div>
+                        
+                        <!-- Buttons -->
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'invoice_list' %}" class="btn btn-secondary">
+                                Back
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                Update Profile
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

@@ -3,6 +3,16 @@
 {% block title %}My Invoices{% endblock %}
 
 {% block content %}
+
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+{% endif %}
+
 <div class="row mb-3">
     <div class="col">
         <h3>My Invoices</h3>
@@ -22,7 +32,6 @@
         <select name="status" class="form-select">
             <option value="">All Status</option>
             <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
-            <option value="processing" {% if status_filter == 'processing' %}selected{% endif %}>Processing</option>
             <option value="reviewed" {% if status_filter == 'reviewed' %}selected{% endif %}>Reviewed</option>
             <option value="error" {% if status_filter == 'error' %}selected{% endif %}>Error</option>
         </select>
@@ -57,8 +66,6 @@
                     <span class="badge bg-success">Reviewed</span>
                 {% elif invoice.status == 'error' %}
                     <span class="badge bg-danger">Error</span>
-                {% elif invoice.status == 'processing' %}
-                    <span class="badge bg-warning">Processing</span>
                 {% else %}
                     <span class="badge bg-secondary">Pending</span>
                 {% endif %}

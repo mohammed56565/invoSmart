@@ -1,11 +1,20 @@
 {% extends 'base.html' %}
-
 {% block title %}Branch Dashboard{% endblock %}
-
 {% block content %}
+
+
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{% if message.tags == 'warning' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+{% endif %}
+
 <div class="row mb-4">
     <div class="col">
-        <h3>{{ branch.name }} — Dashboard</h3>
+        <h3>Manager Dashboard</h3>
     </div>
 </div>
 
@@ -35,6 +44,7 @@
         </div>
     </div>
 </div>
+
 {% if notifications %}
 <div class="row mt-4">
     <div class="col-12">
@@ -59,13 +69,7 @@
 </div>
 {% endif %}
 
-{% if errors > 5 %}
-<div class="alert alert-danger">
-      High error rate detected! {{ errors }} invoices have errors.
-</div>
-{% endif %}
-
-<div class="row">
+<div class="row mt-4">
     <div class="col-md-4">
         <a href="{% url 'branch_invoices' %}" class="btn btn-dark w-100 mb-2">View All Invoices</a>
     </div>

@@ -16,8 +16,15 @@
                                accept=".pdf,.jpg,.jpeg,.png" required>
                         <small class="text-muted">Supported formats: PDF, JPG, PNG</small>
                     </div>
-                    <button type="submit" class="btn btn-dark w-100">
-                        Upload & Process
+                       <div class="d-flex gap-2">
+                         <a href="{% url 'invoice_list' %}" class="btn btn-secondary btn-lg">
+                          Back
+                         </a>
+                         <button type="submit" class="btn btn-dark btn-lg flex-grow-1">
+                          Upload 
+                         </button>
+                       </div>
+                       
                     </button>
                 </form>
             </div>
