@@ -37,7 +37,7 @@ def logout_view(request):
         description=f'{request.user.username} logged out'
     )
     logout(request)
-    return redirect('login')
+    return redirect('home')
 
 @login_required
 def profile_view(request):
@@ -66,7 +66,7 @@ def profile_view(request):
                 logout(request)
                 return redirect('login')
             else:
-                messages.error(request, 'Passwords do not match!')
+                messages.error(request, 'Passwords do not match')
                 return redirect('profile')
         
         user.save()

@@ -34,10 +34,9 @@ def branch_dashboard(request):
         error_rate = round((errors_24h / total_invoices_24h) * 100, 1)
  
     if error_rate > 20 and total_invoices_24h >= 5:
-         messages.warning(request, 'High error rate detected!')
-
-         
-         unread_notifications = Notification.objects.filter(
+        messages.warning(request, 'High error rate detected!')
+    
+    unread_notifications = Notification.objects.filter(
         user=request.user,
         is_read=False
     ).order_by('-created_at')[:5]
@@ -54,8 +53,6 @@ def branch_dashboard(request):
     }
     
     return render(request, 'branches/dashboard.html', context)
-
-@role_required('branch_manager')
 def branch_invoices(request):
     branch = request.user.branch
     invoices = Invoice.objects.filter(branch=branch).order_by('-uploaded_at')

@@ -8,6 +8,10 @@ from core.document_ai_extractor import process_invoice_with_documentai
 from users.decorators import role_required
 from datetime import datetime
 from decimal import Decimal
+from datetime import datetime, timedelta
+from notifications.models import Notification
+from users.models import User
+    
 
 @role_required('accounting_staff')
 def invoice_list(request):
@@ -107,7 +111,24 @@ def upload_invoice(request):
             messages.error(request, f'Error processing invoice: {str(e)}')
             return redirect('invoice_list')
 
-        check_error_threshold(request.user.branch)    
+        check_error_threshold(request.user.branch)  
+
+
+         
+        from notifications.models import Notification
+        
+        if invoice.status == 'error':
+            notif_type = 'invoice_error'
+            notif_message = f'Invoice processing failed. Please review invoice #{invoice.invoice_number or "N/A"}'
+        else:
+            notif_type = 'invoice_processed'
+            notif_message = f'Invoice processed successfully! Status: {invoice.status}'
+        
+        Notification.objects.create(
+            user=request.user,
+            type=notif_type,
+            message=notif_message
+        )  
         messages.success(request, 'Invoice uploaded and processed successfully!')
         return redirect('review_invoice', invoice_id=invoice.id)
 
@@ -197,11 +218,7 @@ def review_invoice(request, invoice_id):
     })
 def check_error_threshold(branch):
 
-    from datetime import datetime, timedelta
-    from notifications.models import Notification
-    from users.models import User
     
-
     yesterday = datetime.now() - timedelta(days=1)
     
     total_invoices = Invoice.objects.filter(
@@ -209,7 +226,6 @@ def check_error_threshold(branch):
         uploaded_at__gte=yesterday
     ).count()
     
-
     if total_invoices < 5:
         return
     
@@ -219,37 +235,34 @@ def check_error_threshold(branch):
         status='error'
     ).count()
     
-
     error_rate = (error_invoices / total_invoices) * 100
-    
-  
     threshold = 20
     
     if error_rate > threshold:
-
-        try:
-            branch_manager = User.objects.get(
-                branch=branch,
-                role='branch_manager'
-            )
-            
-            one_hour_ago = datetime.now() - timedelta(hours=1)
-            existing_alert = Notification.objects.filter(
-                user=branch_manager,
-                notification_type='error_alert',
-                created_at__gte=one_hour_ago,
-                is_read=False
-            ).exists()
-            
-            if not existing_alert:
-                Notification.objects.create(
-                    user=branch_manager,
-                    message=f" High error rate detected: {error_invoices}/{total_invoices} invoices ({error_rate:.1f}%) failed in {branch.name} branch in the last 24 hours.",
-                    notification_type='error_alert'
-                )
+      
+        branch_manager = User.objects.filter(
+            branch=branch,
+            role='branch_manager'
+        ).first()
         
-        except User.DoesNotExist:
-            pass
+    
+        if not branch_manager:
+            return
+        
+        one_hour_ago = datetime.now() - timedelta(hours=1)
+        existing_alert = Notification.objects.filter(
+            user=branch_manager,
+            type='high_error_rate',
+            created_at__gte=one_hour_ago,
+            is_read=False
+        ).exists()
+        
+        if not existing_alert:
+            Notification.objects.create(
+                user=branch_manager,
+                type='high_error_rate',
+                message=f'High error rate detected in {branch.name} branch: {error_invoices}/{total_invoices} invoices ({error_rate:.1f}%) failed in the last 24 hours.'
+            )
 
 @role_required('accounting_staff')
 def delete_invoice(request, invoice_id):
