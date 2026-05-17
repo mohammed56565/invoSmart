@@ -5,7 +5,7 @@
 
 {% if messages %}
     {% for message in messages %}
-    <div class="alert alert-{% if message.tags == 'warning' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
         {{ message }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
@@ -45,29 +45,6 @@
     </div>
 </div>
 
-{% if notifications %}
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card border-warning">
-            <div class="card-header bg-warning text-dark">
-                <h5 class="mb-0"> Notifications ({{ notifications|length }})</h5>
-            </div>
-            <div class="card-body">
-                {% for notification in notifications %}
-                <div class="alert alert-warning mb-3" role="alert">
-                    <strong>{{ notification.message }}</strong>
-                    <br>
-                    <small class="text-muted">{{ notification.created_at|date:"M d, Y - H:i" }}</small>
-                    <a href="{% url 'invoice_list' %}?status=error" class="btn btn-sm btn-outline-dark float-end">
-                        View Error Invoices
-                    </a>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
 
 <div class="row mt-4">
     <div class="col-md-4">

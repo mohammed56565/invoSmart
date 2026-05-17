@@ -6,12 +6,10 @@ from django.conf import settings
 from .models import Invoice, PurchaseOrder
 from core.document_ai_extractor import process_invoice_with_documentai
 from users.decorators import role_required
-from datetime import datetime
 from decimal import Decimal
 from datetime import datetime, timedelta
 from notifications.models import Notification
 from users.models import User
-    
 
 @role_required('accounting_staff')
 def invoice_list(request):
@@ -19,7 +17,6 @@ def invoice_list(request):
         uploaded_by=request.user
     ).order_by('-uploaded_at')
 
-  
     status_filter = request.GET.get('status', '')
     search = request.GET.get('search', '')
 
@@ -44,13 +41,11 @@ def upload_invoice(request):
             messages.error(request, 'Please select a file.')
             return render(request, 'invoices/upload.html')
 
-  
         allowed_types = ['application/pdf', 'image/jpeg', 'image/png']
         if file.content_type not in allowed_types:
             messages.error(request, 'Only PDF, JPG, and PNG files are allowed.')
             return render(request, 'invoices/upload.html')
 
-     
         invoice = Invoice.objects.create(
             file=file,
             status='processing',
@@ -58,11 +53,8 @@ def upload_invoice(request):
             branch=request.user.branch
         )
 
-  
         try:
             file_path = os.path.join(settings.MEDIA_ROOT, invoice.file.name)
-            
-          
             data = process_invoice_with_documentai(file_path)
 
             if data:
@@ -70,13 +62,11 @@ def upload_invoice(request):
                 invoice.supplier_name = data.get('supplier_name') or ''
                 invoice.total_amount = data.get('total_amount')
                 
-             
                 invoice.confidence_data = {
                     'confidence_score': data.get('confidence_score', 0),
                     'field_confidences': data.get('field_confidences', {})
                 }
 
-          
                 date_str = data.get('date_issued', '')
                 if date_str:
                     try:
@@ -84,7 +74,6 @@ def upload_invoice(request):
                     except:
                         pass
 
-            
                 po_number = data.get('po_number', '')
                 if po_number:
                     try:
@@ -99,38 +88,34 @@ def upload_invoice(request):
                 invoice.status = 'pending'
                 invoice.save()
             else:
-             
                 invoice.status = 'error'
                 invoice.save()
-                messages.error(request, 'Failed to extract data from invoice.')
-                return redirect('invoice_list')
 
         except Exception as e:
             invoice.status = 'error'
             invoice.save()
             messages.error(request, f'Error processing invoice: {str(e)}')
-            return redirect('invoice_list')
-
-        check_error_threshold(request.user.branch)  
-
-
-         
-        from notifications.models import Notification
         
+        # Check error threshold for branch manager notification
+        check_error_threshold(request.user.branch)
+        
+        # Create notification based on invoice status
         if invoice.status == 'error':
-            notif_type = 'invoice_error'
-            notif_message = f'Invoice processing failed. Please review invoice #{invoice.invoice_number or "N/A"}'
+            Notification.objects.create(
+                user=request.user,
+                type='invoice_error',
+                message=f'Invoice processing failed. Please review invoice #{invoice.invoice_number or "N/A"}'
+            )
+            messages.error(request, 'Failed to extract data from invoice.')
+            return redirect('invoice_list')
         else:
-            notif_type = 'invoice_processed'
-            notif_message = f'Invoice processed successfully! Status: {invoice.status}'
-        
-        Notification.objects.create(
-            user=request.user,
-            type=notif_type,
-            message=notif_message
-        )  
-        messages.success(request, 'Invoice uploaded and processed successfully!')
-        return redirect('review_invoice', invoice_id=invoice.id)
+            Notification.objects.create(
+                user=request.user,
+                type='invoice_processed',
+                message=f'Invoice processed successfully! Status: {invoice.status}'
+            )
+            messages.success(request, 'Invoice uploaded and processed successfully!')
+            return redirect('review_invoice', invoice_id=invoice.id)
 
     return render(request, 'invoices/upload.html')
 
@@ -139,13 +124,9 @@ def upload_invoice(request):
 def review_invoice(request, invoice_id):
     invoice = get_object_or_404(Invoice, id=invoice_id, uploaded_by=request.user)
 
-
     comparison = {}
     if invoice.purchase_order:
         po = invoice.purchase_order
-        
-
-
         invoice_amount = Decimal(str(invoice.total_amount or 0))
         remaining_after = po.remaining_amount - invoice_amount 
         comparison = {
@@ -158,7 +139,6 @@ def review_invoice(request, invoice_id):
     else:
         comparison = {'po_found': False}
 
-  
     try:
         field_conf = invoice.confidence_data.get('field_confidences', {}) if invoice.confidence_data else {}
         confidence_data = {
@@ -169,7 +149,6 @@ def review_invoice(request, invoice_id):
             'overall': invoice.confidence_data.get('confidence_score', 0) if invoice.confidence_data else 0,
         }
     except:
-    
         confidence_data = {
             'invoice_number': 0,
             'supplier_name': 0,
@@ -182,7 +161,6 @@ def review_invoice(request, invoice_id):
         invoice.invoice_number = request.POST.get('invoice_number', '')
         invoice.supplier_name = request.POST.get('supplier_name', '')
         invoice.date_issued = request.POST.get('date_issued') or None
-
         amount = request.POST.get('total_amount', '')
         if amount:
             try:
@@ -190,20 +168,16 @@ def review_invoice(request, invoice_id):
             except:
                 pass
 
-    
         if invoice.purchase_order and invoice.total_amount:
-          po = invoice.purchase_order
-    
-
-          invoice_amount = Decimal(str(invoice.total_amount))
-    
-          po.amount_used += invoice_amount  
-          po.remaining_amount = po.total_amount - po.amount_used
-    
-          if po.remaining_amount <= 0:
-            po.status = 'closed'
-    
-          po.save()
+            po = invoice.purchase_order
+            invoice_amount = Decimal(str(invoice.total_amount))
+            po.amount_used += invoice_amount  
+            po.remaining_amount = po.total_amount - po.amount_used
+            
+            if po.remaining_amount <= 0:
+                po.status = 'closed'
+            
+            po.save()
 
         invoice.status = 'reviewed'
         invoice.save()
@@ -216,9 +190,9 @@ def review_invoice(request, invoice_id):
         'comparison': comparison,
         'confidence_data': confidence_data,
     })
-def check_error_threshold(branch):
 
-    
+
+def check_error_threshold(branch):
     yesterday = datetime.now() - timedelta(days=1)
     
     total_invoices = Invoice.objects.filter(
@@ -239,13 +213,11 @@ def check_error_threshold(branch):
     threshold = 20
     
     if error_rate > threshold:
-      
         branch_manager = User.objects.filter(
             branch=branch,
             role='branch_manager'
         ).first()
         
-    
         if not branch_manager:
             return
         
@@ -263,6 +235,7 @@ def check_error_threshold(branch):
                 type='high_error_rate',
                 message=f'High error rate detected in {branch.name} branch: {error_invoices}/{total_invoices} invoices ({error_rate:.1f}%) failed in the last 24 hours.'
             )
+
 
 @role_required('accounting_staff')
 def delete_invoice(request, invoice_id):

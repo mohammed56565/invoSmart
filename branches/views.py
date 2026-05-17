@@ -33,13 +33,19 @@ def branch_dashboard(request):
     if total_invoices_24h >= 5:
         error_rate = round((errors_24h / total_invoices_24h) * 100, 1)
  
-    if error_rate > 20 and total_invoices_24h >= 5:
-        messages.warning(request, 'High error rate detected!')
-    
+
     unread_notifications = Notification.objects.filter(
         user=request.user,
-        is_read=False
-    ).order_by('-created_at')[:5]
+        is_read=False,
+        type='high_error_rate'
+    ).order_by('-created_at')
+    
+
+    if unread_notifications.exists():
+        latest = unread_notifications.first()
+        messages.info(request, f'{latest.message}')
+        latest.is_read = True
+        latest.save()
     
     context = {
         'total_invoices': Invoice.objects.filter(branch=branch).count(),
@@ -53,6 +59,8 @@ def branch_dashboard(request):
     }
     
     return render(request, 'branches/dashboard.html', context)
+
+@role_required('branch_manager')
 def branch_invoices(request):
     branch = request.user.branch
     invoices = Invoice.objects.filter(branch=branch).order_by('-uploaded_at')
@@ -148,8 +156,6 @@ Error Rate: {error_rate:.1f}%
 Status: {' High' if error_rate > 20 else ' Normal'}
 Failed Invoices: {errors} out of {total}
 Success Rate: {100 - error_rate:.1f}%
-
-Recommendation: {'Review invoice quality and supplier formats' if error_rate > 20 else 'Error rate is acceptable'}
 """
         
         Report.objects.create(
