@@ -1,10 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import User, ActivityLog
 from branches.models import Branch
-from .decorators import role_required
 from invoices.models import Invoice
 
 def login_view(request):
@@ -29,7 +27,7 @@ def login_view(request):
     
     return render(request, 'users/login.html')
 
-@login_required
+
 def logout_view(request):
     ActivityLog.objects.create(
         user=request.user,
@@ -39,7 +37,7 @@ def logout_view(request):
     logout(request)
     return redirect('home')
 
-@login_required
+
 def profile_view(request):
     if request.method == 'POST':
         user = request.user
@@ -82,7 +80,7 @@ def profile_view(request):
     
     return render(request, 'users/profile.html')
 
-@login_required    
+   
 def dashboard(request):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -98,7 +96,7 @@ def dashboard(request):
     else:
         return render(request, 'users/dashboard.html') 
 
-@role_required('system_admin')
+
 def admin_dashboard(request):
     context = {
         'total_users': User.objects.count(),

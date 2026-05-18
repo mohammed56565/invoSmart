@@ -1,17 +1,16 @@
 # Create your views here.
 import os
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.conf import settings
 from .models import Invoice, PurchaseOrder
 from core.document_ai_extractor import process_invoice_with_documentai
-from users.decorators import role_required
 from decimal import Decimal
 from datetime import datetime, timedelta
 from notifications.models import Notification
 from users.models import User
 
-@role_required('accounting_staff')
+
 def invoice_list(request):
     invoices = Invoice.objects.filter(
         uploaded_by=request.user
@@ -32,7 +31,7 @@ def invoice_list(request):
     })
 
 
-@role_required('accounting_staff')
+
 def upload_invoice(request):
     if request.method == 'POST':
         file = request.FILES.get('file')
@@ -96,10 +95,10 @@ def upload_invoice(request):
             invoice.save()
             messages.error(request, f'Error processing invoice: {str(e)}')
         
-        # Check error threshold for branch manager notification
+
         check_error_threshold(request.user.branch)
         
-        # Create notification based on invoice status
+     
         if invoice.status == 'error':
             Notification.objects.create(
                 user=request.user,
@@ -120,9 +119,9 @@ def upload_invoice(request):
     return render(request, 'invoices/upload.html')
 
 
-@role_required('accounting_staff')
+
 def review_invoice(request, invoice_id):
-    invoice = get_object_or_404(Invoice, id=invoice_id, uploaded_by=request.user)
+    invoice = Invoice.objects.get(id=invoice_id, uploaded_by=request.user)
 
     comparison = {}
     if invoice.purchase_order:
@@ -146,7 +145,7 @@ def review_invoice(request, invoice_id):
             'supplier_name': field_conf.get('supplier_name', 0) if field_conf else 0,
             'total_amount': field_conf.get('total_amount', 0) if field_conf else 0,
             'date_issued': field_conf.get('date_issued', 0) if field_conf else 0,
-            'overall': invoice.confidence_data.get('confidence_score', 0) if invoice.confidence_data else 0,
+         
         }
     except:
         confidence_data = {
@@ -154,7 +153,7 @@ def review_invoice(request, invoice_id):
             'supplier_name': 0,
             'total_amount': 0,
             'date_issued': 0,
-            'overall': 0,
+      
         }
 
     if request.method == 'POST':
@@ -221,25 +220,16 @@ def check_error_threshold(branch):
         if not branch_manager:
             return
         
-        one_hour_ago = datetime.now() - timedelta(hours=1)
-        existing_alert = Notification.objects.filter(
-            user=branch_manager,
-            type='high_error_rate',
-            created_at__gte=one_hour_ago,
-            is_read=False
-        ).exists()
-        
-        if not existing_alert:
-            Notification.objects.create(
+        Notification.objects.create(
                 user=branch_manager,
                 type='high_error_rate',
-                message=f'High error rate detected in {branch.name} branch: {error_invoices}/{total_invoices} invoices ({error_rate:.1f}%) failed in the last 24 hours.'
+                message=f'High error rate detected'
             )
 
 
-@role_required('accounting_staff')
+
 def delete_invoice(request, invoice_id):
-    invoice = get_object_or_404(Invoice, id=invoice_id, uploaded_by=request.user)
+    invoice = Invoice.objects.get(id=invoice_id, uploaded_by=request.user)
 
     if request.method == 'POST':
         invoice.file.delete()

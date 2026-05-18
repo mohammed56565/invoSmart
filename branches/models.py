@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-# Create your models here.
+
 
 
 class Branch(models.Model):
@@ -20,7 +20,7 @@ class Report(models.Model):
     TYPE_CHOICES = [
         ('monthly', 'Monthly'),
         ('error_summary', 'Error Summary'),
-        ('invoice_summary', 'Invoice Summary'),
+   
     ]
 
     branch = models.ForeignKey( Branch,on_delete=models.CASCADE,null=True,blank=True )

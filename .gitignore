@@ -1,11 +1,10 @@
-# Python
+
 *.pyc
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 
-# Virtual Environment
 venv/
 venv2/
 env/
@@ -19,25 +18,24 @@ db.sqlite3-journal
 media/
 staticfiles/
 
-# Environment Variables
+
 .env
 .env.local
 .env.production
 
-# Google Cloud Credentials
 *.json
 !package.json
 credentials.json
 google-credentials.json
 shaped-goal-*.json
 
-# IDE
+
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS
+
 .DS_Store
 Thumbs.db
 desktop.ini

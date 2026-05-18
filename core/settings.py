@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = True
 
 ALLOWED_HOSTS = []
 
@@ -133,4 +133,3 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 
 
 GOOGLE_APPLICATION_CREDENTIALS = os.path.join(BASE_DIR, 'google-credentials.json')
-POPPLER_PATH = r"C:\poppler-25.12.0\Library\bin"
